@@ -298,7 +298,7 @@
 </template>
 
 <script>
-import { arrayToTree } from "./array.js";
+import { arrayToTree, filterTreeByName } from "./array.js";
 export default {
   data() {
     return {
@@ -596,6 +596,9 @@ export default {
 
       // 处理完毕取消选中
       this.$refs["from-tree"].setCheckedKeys([]);
+
+      // aiyingya 过滤显示
+      this.$refs["to-tree"].filter(this.filterTo);
     },
     // 移除按钮
     removeToSource() {
@@ -725,14 +728,71 @@ export default {
     },
     // 源树选中事件 - 是否禁用穿梭按钮
     fromTreeChecked(nodeObj, treeObj) {
-      this.from_check_keys = treeObj.checkedNodes;
+      // aiyingya：只选中过滤后的节点
+      let nodes = [];
+      treeObj.checkedNodes.filter(item=>!item.children.length).forEach(item => {
+        nodes.push(JSON.parse(JSON.stringify(item)));
+      });
+      nodes = filterTreeByName(nodes, this.filterFrom);
+
+      // TODO: aiyingya: 当做只有两层数据，若多层数据到底是选中还是取消选中逻辑需要整理，
+      // aiyingya: 判断是选中还是取消选中（因为全选按钮因为筛选后的数据无法显示全选效果）
+      let newList = [];
+      this.from_check_keys.forEach(item=>{
+        let isRemoveChecked = false;
+        if(nodeObj.children && nodeObj.children.length>0){
+          isRemoveChecked =  nodeObj.children.find(v=>v.id == item.id);
+        }else{
+          isRemoveChecked = nodeObj.id == item.id;
+        }
+        !isRemoveChecked && newList.push(item);
+      });
+      
+      const isAddChecked = newList.length === this.from_check_keys.length;
+      newList = isAddChecked ? this.from_check_keys.concat(nodes): newList;
+
+      const  from_check_keys =this.from_check_keys = Array.from(new Set(newList));
+      console.log("from_check_keys",from_check_keys)
+      this.$refs["from-tree"].setCheckedNodes(from_check_keys);
+
+      // old
+      // this.from_check_keys = treeObj.checkedNodes;
+
       this.$nextTick(() => {
         this.$emit("left-check-change", nodeObj, treeObj, this.from_check_all);
       });
     },
     // 目标树选中事件 - 是否禁用穿梭按钮
     toTreeChecked(nodeObj, treeObj) {
-      this.to_check_keys = treeObj.checkedNodes;
+      // aiyingya：只选中过滤后的节点
+      let nodes = [];
+      treeObj.checkedNodes.filter(item=>!item.children.length).forEach(item => {
+        nodes.push(JSON.parse(JSON.stringify(item)));
+      });
+      nodes = filterTreeByName(nodes, this.filterTo);
+
+
+      // aiyingya: 判断是选中还是取消选中（因为全选按钮因为筛选后的数据无法显示全选效果）
+      let newList = [];
+      this.from_check_keys.forEach(item=>{
+        let isRemoveChecked = false;
+        if(nodeObj.children && nodeObj.children.length>0){
+          isRemoveChecked =  nodeObj.children.find(v=>v.id == item.id);
+        }else{
+          isRemoveChecked = nodeObj.id == item.id;
+        }
+        !isRemoveChecked && newList.push(item);
+      });
+      
+      const isAddChecked = newList.length === this.from_check_keys.length;
+      newList = isAddChecked ? this.from_check_keys.concat(nodes): newList;
+      
+      this.to_check_keys = Array.from(new Set(newList));
+      this.$refs["to-tree"].setCheckedNodes(newList);
+
+      // old
+      // this.to_check_keys = treeObj.checkedNodes;
+
       this.$nextTick(() => {
         this.$emit("right-check-change", nodeObj, treeObj, this.to_check_all);
       });
