@@ -709,6 +709,9 @@ export default {
       });
       // 处理完毕取消选中
       this.$refs["to-tree"].setCheckedKeys([]);
+
+      // aiyingya 过滤显示
+      this.$refs["from-tree"].filter(this.filterFrom);
     },
     // 异步加载左侧
     leftloadNode(node, resolve) {
