@@ -82,10 +82,26 @@ function arrayToTree(
   }
 }
 
+function filterTreeByName(menuList, filterVal) {
+  // aiyingya 获取过滤的结果
+  return menuList
+    .filter(item => {
+      return item.name.indexOf(filterVal) !== -1;
+    })
+    .map(item => {
+      item = Object.assign({}, item);
+      if (item.children) {
+        item.children = filterTreeByName(item.children, filterVal);
+      }
+      return item;
+    });
+}
+
 export {
   valInDeep,
   flattenDeep,
   flattenDeepParents,
   regDeepParents,
-  arrayToTree
+  arrayToTree,
+  filterTreeByName
 };
